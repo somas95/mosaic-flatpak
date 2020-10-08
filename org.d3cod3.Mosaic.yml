@@ -26,15 +26,18 @@ add-extensions:
 
 modules:
 # openFrameworks dependencies
+  - shared-modules/glu/glu-9.json
   - shared-modules/glew/glew.json
   - shared-modules/gtk2/gtk2.json
   - name: freeglut
+    build-options:
+      cflags: -fcommon
+      cxxflags: -fcommon
     buildsystem: cmake-ninja
-    config-opts:
-      - -DCMAKE_INSTALL_LIBDIR=/app/lib
+    builddir: true
     sources:
       - type: archive
-        url: "https://sourceforge.net/projects/freeglut/files/freeglut/3.2.1/freeglut-3.2.1.tar.gz/download"
+        url: "https://sourceforge.net/projects/freeglut/files/freeglut/3.2.1/freeglut-3.2.1.tar.gz"
         md5: cd5c670c1086358598a6d4a9d166949d
         
   - name: libxmu
@@ -52,7 +55,7 @@ modules:
       - type: script
         commands: 
          - autoreconf -fiv
-      - dest-filename: autogen.sh
+        dest-filename: autogen.sh
       
   - name: freeimage
     buildsystem: simple
@@ -110,8 +113,9 @@ modules:
   - name: boost
     buildsystem: simple
     build-commands:
-      - mkdir -p /app/include/boost
-      - mv -t /app/include/boost *
+      - ./bootstrap.sh --prefix="${FLATPAK_DEST}"
+      - ./b2 -j ${FLATPAK_BUILDER_N_JOBS} headers
+      - cp -r boost "${FLATPAK_DEST}/include/boost"
     sources:
       - type: archive
         url: https://dl.bintray.com/boostorg/release/1.72.0/source/boost_1_72_0.tar.bz2
@@ -161,8 +165,13 @@ modules:
       sha256: 44592a488d2830c0b4f3bfe4ae41f0c46abbfad49828d938714444e858a00818
 
   - name: openframeworks
-    buildsystem: make
+    buildsystem: simple
+    subdir: libs/openFrameworksCompiled/project
+    build-commands:
+      - make -j$FLATPAK_BUILDER_N_JOBS Debug
     sources:
       - type: archive
         url: https://openframeworks.cc/versions/v0.11.0/of_v0.11.0_linux64gcc6_release.tar.gz
         sha256: 513cee3ce081e79fdc1a942af09869145fff3d7addeee0a76cef26fbc3ae69b1
+      - type: patch
+        path: openal_fix.patch
