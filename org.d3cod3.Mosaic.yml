@@ -83,8 +83,21 @@ modules:
       - -DCMAKE_BUILD_TYPE=Debug
       - -DOPENCV_GENERATE_PKGCONFIG=ON
       - -OPENCV_ENABLE_NONFREE=ON
+      - -DWITH_OPENCL=ON
+      - -DWITH_OPENGL=ON
+      - -DWITH_TBB=ON
+      - -DWITH_VULKAN=ON
+      - -DBUILD_WITH_DEBUG_INFO=OFF
+      - -DBUILD_TESTS=OFF
+      - -DBUILD_PERF_TESTS=OFF
+      - -DBUILD_EXAMPLES=OFF
+      - -DINSTALL_C_EXAMPLES=OFF
+      - -DINSTALL_PYTHON_EXAMPLES=OFF
+      # - -DOPENCV_EXTRA_MODULES_PATH="contrib/modules"
+      - -DWITH_1394=OFF
+      - -DWITH_PROTOBUF=ON
       # - -DOPENCV_EXTRA_MODULES_PATH=../opencv_contrib-master/modules ../opencv-master
-      - -DBUILD_LIST=tracking
+      - -DBUILD_LIST=calib3d,core,dnn,features2d,flann,highgui,imgcodecs,imgproc,java_bindings_generator,ml,objdetect,photo,python_bindings_generator,python_tests,stitching,video,videoio
     # cleanup:
     #   - "/bin"
     sources:
@@ -94,6 +107,7 @@ modules:
       - type: archive
         url: https://github.com/opencv/opencv_contrib/archive/4.2.0.tar.gz
         sha256: 8a6b5661611d89baa59a26eb7ccf4abb3e55d73f99bb52d8f7c32265c8a43020
+        # dest: contrib
 
   - name: assimp
     buildsystem: cmake-ninja
@@ -117,9 +131,9 @@ modules:
   - name: boost
     buildsystem: simple
     build-commands:
-      - ./bootstrap.sh --prefix="${FLATPAK_DEST}"
-      - ./b2 -j ${FLATPAK_BUILDER_N_JOBS} headers
-      - cp -r boost "${FLATPAK_DEST}/include/boost"
+      - ./bootstrap.sh --prefix=/app
+      - ./b2 -j $FLATPAK_BUILDER_N_JOBS headers
+      - ./b2 -j $FLATPAK_BUILDER_N_JOBS install
     sources:
       - type: archive
         url: https://dl.bintray.com/boostorg/release/1.72.0/source/boost_1_72_0.tar.bz2
@@ -178,6 +192,8 @@ modules:
       - cd apps/d3cod3/Mosaic && make -j$FLATPAK_BUILDER_N_JOBS Release
       - mkdir /app/mosaic
       - cp -ar * /app/mosaic
+    post-install:
+      - ln -s mosaic/apps/d3cod3/Mosaic/bin/Mosaic /app/bin/mosaic
     cleanup:
       - src
     sources:
@@ -195,8 +211,10 @@ modules:
           - sed -i -E 's/ADDON_PKG_CONFIG_LIBRARIES =(.*)opencv$/ADDON_PKG_CONFIG_LIBRARIES =\1opencv4/g' addons/ofxOpenCv/addon_config.mk
       - type: patch
         path: openal_fix.patch
+        strip-components: 0
       - type: patch
         path: make4.3.patch
+        strip-components: 0
 # addons
       - type: git
         url: https://github.com/d3cod3/ofxAudioAnalyzer.git
