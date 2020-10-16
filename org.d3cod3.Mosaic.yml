@@ -23,7 +23,8 @@ add-extensions:
       add-ld-path: .
       no-autodownload: true
       autodelete: false
-
+cleanup-commands:
+  - mkdir -p ${FLATPAK_DEST}/lib/ffmpeg
 modules:
 # openFrameworks dependencies
   - shared-modules/glu/glu-9.json
@@ -181,6 +182,37 @@ modules:
     - type: archive
       url: https://github.com/pocoproject/poco/archive/poco-1.10.1-release.tar.gz
       sha256: 44592a488d2830c0b4f3bfe4ae41f0c46abbfad49828d938714444e858a00818
+  - name: libdaemon
+    buildsystem: autotools
+    config-opts:
+      - "--prefix=/app"
+    sources:
+      - type: git
+        url: git://git.0pointer.net/libdaemon.git
+        commit: 9fcc28e0e8f84968d1fb8b6d544a42efb13803ec
+  - name: libevent
+    buildsystem: autotools
+    config-opts:
+      - "--prefix=/app"
+    sources:
+      - type: git
+        url: https://github.com/libevent/libevent
+        tag: release-2.1.12-stable
+  - name: avahi
+    buildsystem: autotools
+    config-opts:
+      - "--prefix=/app"
+      - "--with-distro=none"
+      - "--disable-gtk3"
+      - "--disable-mono"
+      - "--disable-qt5"
+      - "--disable-manpages"
+      - "--disable-python"
+      - "--with-systemdsystemunitdir=no"
+    sources:
+      - type: git
+        url: https://github.com/lathiat/avahi
+        tag: v0.8
   - name: openframeworks
     buildsystem: simple
     # subdir: libs/openFrameworksCompiled/project
@@ -189,11 +221,13 @@ modules:
       - cd src/fftw3 && ./configure --prefix=`pwd` --enable-float --enable-sse2 --with-incoming-stack-boundary=2 --with-our-malloc16 --disable-shared --enable-static && make MAKEINFO=true -j$FLATPAK_BUILDER_N_JOBS
       - mkdir addons/ofxAudioAnalyzer/libs/fftw3f/lib/linux64
       - cp src/fftw3/.libs/libfftw3f.a addons/ofxAudioAnalyzer/libs/fftw3f/lib/linux64/
+      - cp addons/ofxNDI/libs/libndi/lib/x86_64-linux-gnu/libndi.so.3.7.1 /app/lib
+      - ln -s /app/lib/libndi.so.3.7.1 /app/lib/libndi.so.3
       - cd apps/d3cod3/Mosaic && make -j$FLATPAK_BUILDER_N_JOBS Release
       - mkdir /app/mosaic
       - cp -ar * /app/mosaic
     post-install:
-      - ln -s mosaic/apps/d3cod3/Mosaic/bin/Mosaic /app/bin/mosaic
+      - ln -s ../mosaic/apps/d3cod3/Mosaic/bin/Mosaic /app/bin/mosaic
     cleanup:
       - src
     sources:
