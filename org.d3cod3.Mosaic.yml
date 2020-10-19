@@ -14,6 +14,9 @@ finish-args:
   - --share=network
   # Needs to save files locally
   - --filesystem=host
+  # Needs audio devices access
+  - --socket=pulseaudio
+  - --device=all # ALSA
 # cleanup:
 #  - /include
 add-extensions:
